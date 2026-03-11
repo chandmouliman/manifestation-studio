@@ -1,0 +1,191 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 300 30% 98%;
+    --foreground: 280 20% 15%;
+
+    --card: 300 25% 99%;
+    --card-foreground: 280 20% 15%;
+
+    --popover: 300 25% 99%;
+    --popover-foreground: 280 20% 15%;
+
+    --primary: 280 45% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 340 40% 94%;
+    --secondary-foreground: 340 30% 30%;
+
+    --muted: 290 20% 94%;
+    --muted-foreground: 280 12% 50%;
+
+    --accent: 40 55% 58%;
+    --accent-foreground: 40 55% 15%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 290 20% 90%;
+    --input: 290 20% 90%;
+    --ring: 280 45% 65%;
+
+    --radius: 1rem;
+
+    /* Custom tokens — dreamy pink/lavender palette */
+    --lavender: 280 45% 65%;
+    --lavender-light: 280 40% 93%;
+    --lavender-soft: 275 35% 88%;
+    --rose: 340 55% 72%;
+    --rose-light: 340 45% 94%;
+    --gold: 40 55% 58%;
+    --gold-light: 40 45% 93%;
+    --beige: 35 40% 94%;
+    --beige-dark: 35 30% 80%;
+    --pink-soft: 330 40% 92%;
+    --pink-dream: 320 50% 85%;
+    --pink-blush: 345 60% 88%;
+    --sage: 150 22% 62%;
+    --sage-light: 150 22% 93%;
+    --lilac: 270 40% 80%;
+    --lilac-light: 270 35% 94%;
+    --mauve: 300 20% 75%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(280 40% 93%), hsl(340 45% 94%), hsl(320 50% 92%));
+    --gradient-lavender: linear-gradient(135deg, hsl(280 55% 72%), hsl(310 45% 75%));
+    --gradient-gold: linear-gradient(135deg, hsl(40 55% 58%), hsl(35 50% 65%));
+    --gradient-rose: linear-gradient(135deg, hsl(340 55% 72%), hsl(320 50% 78%));
+    --gradient-card: linear-gradient(145deg, hsl(300 25% 99%), hsl(280 30% 96%));
+    --gradient-nav: linear-gradient(180deg, transparent, hsl(300 30% 98% / 0.9), hsl(300 30% 98%));
+    --gradient-dreamy: linear-gradient(135deg, hsl(280 40% 93%), hsl(340 45% 94%), hsl(270 35% 94%));
+    --gradient-pink: linear-gradient(135deg, hsl(330 50% 88%), hsl(340 55% 82%));
+    --gradient-lilac: linear-gradient(135deg, hsl(270 45% 78%), hsl(290 40% 82%));
+    --gradient-blush: linear-gradient(135deg, hsl(345 60% 90%), hsl(330 50% 92%));
+    --gradient-fairy: linear-gradient(160deg, hsl(280 40% 93%), hsl(330 45% 92%), hsl(270 35% 95%));
+
+    --shadow-soft: 0 4px 24px -4px hsl(280 45% 65% / 0.15);
+    --shadow-card: 0 2px 16px -2px hsl(280 45% 65% / 0.1);
+    --shadow-glow: 0 0 30px -5px hsl(280 45% 65% / 0.25);
+    --shadow-dreamy: 0 8px 32px -8px hsl(320 50% 70% / 0.2);
+    --shadow-pink: 0 4px 20px -4px hsl(340 55% 72% / 0.2);
+
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  .gradient-lavender {
+    background: var(--gradient-lavender);
+  }
+  .gradient-gold {
+    background: var(--gradient-gold);
+  }
+  .gradient-rose {
+    background: var(--gradient-rose);
+  }
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+  .gradient-dreamy {
+    background: var(--gradient-dreamy);
+  }
+  .gradient-pink {
+    background: var(--gradient-pink);
+  }
+  .gradient-lilac {
+    background: var(--gradient-lilac);
+  }
+  .gradient-blush {
+    background: var(--gradient-blush);
+  }
+  .gradient-fairy {
+    background: var(--gradient-fairy);
+  }
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  .shadow-dreamy {
+    box-shadow: var(--shadow-dreamy);
+  }
+  .shadow-pink {
+    box-shadow: var(--shadow-pink);
+  }
+  .text-gradient-lavender {
+    background: var(--gradient-lavender);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-gold {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-pink {
+    background: var(--gradient-pink);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .glass-card {
+    background: hsl(300 25% 99% / 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .glass-pink {
+    background: hsl(340 45% 94% / 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .glass-morphism {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+}

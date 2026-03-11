@@ -1,0 +1,178 @@
+export interface AffirmationCategory {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  affirmations: string[];
+}
+
+export const affirmationCategories: AffirmationCategory[] = [
+  {
+    id: "self-concept",
+    name: "Self Concept",
+    icon: "✨",
+    color: "lavender",
+    affirmations: [
+      "I am worthy of all the good that life has to offer.",
+      "I am confident, powerful, and unstoppable.",
+      "I radiate beauty, charm, and grace.",
+      "I am the best version of myself every single day.",
+      "I love and accept myself unconditionally.",
+      "I am magnetic and everyone is drawn to my energy.",
+      "My self-concept is strong and unshakable.",
+      "I am deserving of love, success, and abundance.",
+    ],
+  },
+  {
+    id: "money",
+    name: "Money",
+    icon: "💰",
+    color: "gold",
+    affirmations: [
+      "Money flows easily and effortlessly into my life.",
+      "I am a magnet for financial abundance.",
+      "Wealth is my natural state of being.",
+      "I am open to receiving unlimited prosperity.",
+      "Every dollar I spend comes back to me multiplied.",
+      "I am financially free and abundant.",
+      "Money comes to me from expected and unexpected sources.",
+      "I deserve to be wealthy and prosperous.",
+    ],
+  },
+  {
+    id: "love",
+    name: "Love",
+    icon: "💕",
+    color: "rose",
+    affirmations: [
+      "I am deeply loved and valued.",
+      "Love flows to me naturally and effortlessly.",
+      "I attract loving and healthy relationships.",
+      "I am worthy of a beautiful, loving partnership.",
+      "My heart is open to giving and receiving love.",
+      "I radiate love and it returns to me tenfold.",
+      "I am in a loving, committed, and fulfilling relationship.",
+      "The love I desire is already seeking me.",
+    ],
+  },
+  {
+    id: "career",
+    name: "Career",
+    icon: "🚀",
+    color: "sage",
+    affirmations: [
+      "I am thriving in my dream career.",
+      "Opportunities flow to me with ease.",
+      "I am recognized and valued for my talents.",
+      "My work makes a meaningful impact in the world.",
+      "I am confident in my professional abilities.",
+      "Success comes naturally to me in my career.",
+      "I attract the perfect opportunities for growth.",
+      "I am living my purpose through my work.",
+    ],
+  },
+  {
+    id: "health",
+    name: "Health",
+    icon: "🌿",
+    color: "sage",
+    affirmations: [
+      "My body is healthy, strong, and full of energy.",
+      "I radiate health and vitality.",
+      "Every cell in my body vibrates with wellness.",
+      "I am grateful for my perfect health.",
+      "My body heals quickly and naturally.",
+      "I nourish my body with love and care.",
+      "I am full of energy and vitality.",
+      "My mind and body are in perfect harmony.",
+    ],
+  },
+  {
+    id: "confidence",
+    name: "Confidence",
+    icon: "👑",
+    color: "gold",
+    affirmations: [
+      "I am confident in every situation.",
+      "I trust myself completely.",
+      "I speak with confidence and clarity.",
+      "I am fearless and bold.",
+      "My confidence grows stronger every day.",
+      "I believe in my abilities wholeheartedly.",
+      "I walk into every room with confidence.",
+      "I am proud of who I am becoming.",
+    ],
+  },
+  {
+    id: "anxiety-relief",
+    name: "Anxiety Relief",
+    icon: "🕊️",
+    color: "lavender",
+    affirmations: [
+      "I am calm, peaceful, and centered.",
+      "I release all worry and embrace peace.",
+      "Everything is working out for my highest good.",
+      "I trust the process of life.",
+      "I am safe and secure in this moment.",
+      "Peace flows through me with every breath.",
+      "I let go of what I cannot control.",
+      "I am surrounded by love and support.",
+    ],
+  },
+  {
+    id: "travel",
+    name: "Travel",
+    icon: "✈️",
+    color: "rose",
+    affirmations: [
+      "I travel the world freely and abundantly.",
+      "Amazing travel experiences come to me easily.",
+      "I explore beautiful destinations effortlessly.",
+      "The world is my playground and I enjoy every moment.",
+      "I attract luxury travel experiences.",
+      "Every trip I take is magical and transformative.",
+      "I am free to travel wherever my heart desires.",
+      "Adventures await me everywhere I go.",
+    ],
+  },
+  {
+    id: "success",
+    name: "Success",
+    icon: "⭐",
+    color: "gold",
+    affirmations: [
+      "I am destined for greatness.",
+      "Success is my birthright.",
+      "Everything I touch turns to gold.",
+      "I am a powerful creator of my reality.",
+      "I achieve my goals with ease and grace.",
+      "The universe conspires in my favor.",
+      "I am living my most successful life now.",
+      "My potential is limitless.",
+    ],
+  },
+];
+
+export const dailyQuotes = [
+  "Your assumptions today create your reality tomorrow.",
+  "What you assume to be true becomes your experience.",
+  "Live in the end. Feel it real.",
+  "Your imagination is the preview of life's coming attractions.",
+  "Assume the feeling of the wish fulfilled.",
+  "Change your conception of yourself and you will change your world.",
+  "An assumption, though false, if persisted in will harden into fact.",
+  "The world is your mirror, reflecting back your assumptions.",
+  "You are already the person you want to be. Assume it.",
+  "Your inner world creates your outer reality.",
+];
+
+export const journalPrompts = [
+  "What did you manifest today?",
+  "What are you grateful for?",
+  "What assumption are you choosing today?",
+  "Describe your ideal reality in vivid detail.",
+  "What limiting belief did you release today?",
+  "How did you live in the end today?",
+  "What signs of your manifestation did you notice?",
+  "Write about the person you are becoming.",
+];
