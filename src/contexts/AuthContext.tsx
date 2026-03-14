@@ -35,8 +35,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
   const syncWithBackend = async (firebaseUser: FirebaseUser) => {
+    // Create a fallback user object from Firebase in case backend sync fails
+    const fallbackUser: User = {
+      id: firebaseUser.uid,
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      name: firebaseUser.displayName,
+      displayName: firebaseUser.displayName,
+      photoURL: firebaseUser.photoURL,
+      plan: 'free' // Default to free plan if backend is unreachable
+    };
+
     try {
       const idToken = await firebaseUser.getIdToken();
+      setToken(idToken);
+      localStorage.setItem('auth_token', idToken);
+      
+      // Attempt to sync with backend
       const response = await fetch(`${API_URL}/api/auth/firebase`, {
         method: 'POST',
         headers: {
@@ -52,16 +67,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (response.ok) {
         const data = await response.json();
-        setToken(idToken);
         setUser(data.user);
-        localStorage.setItem('auth_token', idToken);
+        localStorage.setItem('auth_user', JSON.stringify(data.user));
+      } else {
+        console.warn("Backend sync failed with status:", response.status, "using fallback.");
+        setUser(fallbackUser);
+        localStorage.setItem('auth_user', JSON.stringify(fallbackUser));
       }
     } catch (error) {
-      console.error("Failed to sync with backend:", error);
+      console.error("Failed to sync with backend, using fallback:", error);
+      setUser(fallbackUser);
+      localStorage.setItem('auth_user', JSON.stringify(fallbackUser));
     }
   };
 
   useEffect(() => {
+    // Try to load user from localStorage immediately to prevent flicker/logout on refresh
+    const savedUser = localStorage.getItem('auth_user');
+    const savedToken = localStorage.getItem('auth_token');
+    if (savedUser && savedToken) {
+      try {
+        setUser(JSON.parse(savedUser));
+        setToken(savedToken);
+      } catch (e) {
+        console.error("Failed to parse saved user:", e);
+      }
+    }
     let unsubscribe = () => {};
     
     try {
@@ -90,6 +121,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     auth.signOut();
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
   };
 
   const updateUser = (userData: Partial<User>) => {
