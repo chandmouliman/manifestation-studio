@@ -417,11 +417,18 @@ const MenuPage = () => {
           </div>
           <div className="flex-1">
             <p className="text-base font-body font-semibold text-foreground">
-              {user?.name || user?.displayName || "Manifestor"}
+              {user?.name || user?.displayName || user?.email?.split('@')[0] || "Manifestor"}
             </p>
-            <p className="text-xs text-muted-foreground font-body capitalize">
-              {user?.plan || "Free Plan"}
-            </p>
+            <div className="flex flex-col">
+              {user?.email && (user?.name || user?.displayName) && (
+                <p className="text-[10px] text-muted-foreground font-body lowercase opacity-70">
+                  {user.email}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground font-body capitalize mt-0.5">
+                {user?.plan || "Free Plan"}
+              </p>
+            </div>
           </div>
           {(!user?.plan || user?.plan === 'free') && (
             <button 
