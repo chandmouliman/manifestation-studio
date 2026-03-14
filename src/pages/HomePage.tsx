@@ -125,7 +125,7 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            {user ? `Welcome, ${user.name || 'Seeker'}` : "Assume"}
+            {user ? `Welcome, ${user.name || user.displayName || user.email?.split('@')[0] || 'Seeker'}` : "Assume"}
           </motion.h1>
           <motion.p
             className="text-sm text-primary-foreground/80 font-body mt-1"
