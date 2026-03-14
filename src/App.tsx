@@ -18,8 +18,6 @@ import NotFound from "./pages/NotFound";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminLogin from "./pages/AdminLogin";
 
 const queryClient = new QueryClient();
 
@@ -43,8 +41,6 @@ const AppContent = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/affirmations" element={<RouteGuard component={<AffirmationsPage />} />} />
         <Route path="/vision-board" element={<RouteGuard component={<VisionBoardPage />} />} />
         <Route path="/journal" element={<RouteGuard component={<JournalPage />} />} />

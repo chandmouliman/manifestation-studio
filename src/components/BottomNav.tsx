@@ -7,7 +7,6 @@ const navItems = [
   { path: "/affirmations", icon: Sparkles, label: "Affirm" },
   { path: "/vision-board", icon: Layout, label: "Vision" },
   { path: "/journal", icon: BookOpen, label: "Journal" },
-  { path: "/admin", icon: Layout, label: "Admin" },
   { path: "/menu", icon: Menu, label: "Menu" },
 ];
 
