@@ -50,12 +50,10 @@ router.post('/firebase', async (req, res) => {
 
     user.photoURL = decodedToken.picture || null;
     
-    // Explicitly check trial status
-    const now = new Date();
-    const trialStart = new Date(user.trial_started_at);
-    const diffDays = Math.ceil((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24));
-    user.trialDaysUsed = diffDays;
-    user.isTrialExpired = diffDays > 10 && user.plan === 'free';
+    // Everyone is on the free/standard plan with no limits
+    user.trialDaysUsed = 0;
+    user.isTrialExpired = false;
+    user.plan = 'free';
 
     res.json({ user });
   } catch (error) {

@@ -30,15 +30,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Backend is running' });
 });
 
-const subscriptionRoutes = require('./routes/subscription');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/journal', journalRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/activity', activityRoutes);
-app.use('/api/vision', visionRoutes);
-app.use('/api/payment', paymentRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

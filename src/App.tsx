@@ -13,7 +13,6 @@ import MenuPage from "./pages/MenuPage";
 import NightModePage from "./pages/NightModePage";
 import TimerPage from "./pages/TimerPage";
 import ToolsPage from "./pages/ToolsPage";
-import TrialExpiredPage from "./pages/TrialExpiredPage";
 import NotFound from "./pages/NotFound";
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -53,7 +52,6 @@ const AppContent = () => {
         <Route path="/night-mode" element={<RouteGuard component={<NightModePage />} />} />
         <Route path="/timer" element={<RouteGuard component={<TimerPage />} />} />
         <Route path="/tools" element={<RouteGuard component={<ToolsPage />} />} />
-        <Route path="/trial-expired" element={<TrialExpiredPage />} />
         <Route path="*" element={<RouteGuard component={<NotFound />} />} />
       </Routes>
       <BottomNav />
@@ -66,9 +64,6 @@ const RouteGuard = ({ component }: { component: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user?.isTrialExpired && user?.plan === 'free' && window.location.pathname !== '/trial-expired') {
-      navigate('/trial-expired');
-    }
   }, [user, navigate]);
 
   return <>{component}</>;

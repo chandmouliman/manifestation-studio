@@ -11,9 +11,6 @@ interface User {
   photoURL?: string | null;
   phone_number?: string | null;
   plan?: string | null;
-  subscription_until?: string | null;
-  trialDaysUsed?: number;
-  isTrialExpired?: boolean;
 }
 
 interface AuthContextType {
@@ -43,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       name: firebaseUser.displayName,
       displayName: firebaseUser.displayName,
       photoURL: firebaseUser.photoURL,
-      plan: 'free' // Default to free plan if backend is unreachable
+      plan: 'free'
     };
 
     try {

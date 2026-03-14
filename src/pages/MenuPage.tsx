@@ -286,36 +286,6 @@ const MenuPage = () => {
   const { user, updateUser } = useAuth();
   const [expandedTechnique, setExpandedTechnique] = useState<number | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
-  const [isUpgrading, setIsUpgrading] = useState(false);
-
-  const handleUpgrade = async (planType: 'premium' | 'yearly') => {
-    if (!user) {
-      toast.error("Please log in to upgrade");
-      navigate("/login");
-      return;
-    }
-
-    setIsUpgrading(true);
-    try {
-      const response = await fetch("http://localhost:5001/api/subscription/upgrade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id || user.uid, plan: "premium" }), // Map both id/uid
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        updateUser(data.user);
-        toast.success(`Upgraded to Premium!`);
-      } else {
-        throw new Error(data.error || "Upgrade failed");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to upgrade");
-    } finally {
-      setIsUpgrading(false);
-    }
-  };
 
   if (selectedTopic !== null) {
     const topic = learningTopics[selectedTopic];
@@ -430,51 +400,8 @@ const MenuPage = () => {
               </p>
             </div>
           </div>
-          {(!user?.plan || user?.plan === 'free') && (
-            <button 
-              onClick={() => handleUpgrade('premium')}
-              disabled={isUpgrading}
-              className="px-3 py-1.5 rounded-full bg-gold/10 text-gold text-xs font-body font-semibold flex items-center gap-1 hover:bg-gold/20 transition-colors"
-            >
-              <Crown className="w-3 h-3" /> {isUpgrading ? "Wait..." : "Upgrade"}
-            </button>
-          )}
         </motion.div>
 
-        {(!user?.plan || user?.plan === 'free') && (
-          <motion.div
-            className="rounded-2xl p-5 gradient-lavender shadow-dreamy overflow-hidden relative"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-primary-foreground/10 animate-sparkle" />
-            <div className="absolute bottom-3 right-8 w-5 h-5 rounded-full bg-primary-foreground/10 animate-sparkle" style={{ animationDelay: '0.5s' }} />
-            <div className="flex items-center gap-2 mb-2">
-              <Crown className="w-5 h-5 text-primary-foreground" />
-              <h3 className="text-base font-display font-bold text-primary-foreground">Go Premium</h3>
-            </div>
-            <p className="text-xs text-primary-foreground/80 font-body mb-3">
-              Unlock unlimited affirmations, guided visualizations, custom generators & more.
-            </p>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => handleUpgrade('premium')}
-                className="flex-1 rounded-xl bg-primary-foreground/20 backdrop-blur-sm p-3 text-center hover:bg-primary-foreground/30 transition-colors"
-              >
-                <p className="text-lg font-display font-bold text-primary-foreground">$4.99</p>
-                <p className="text-[10px] text-primary-foreground/70 font-body">/ month</p>
-              </button>
-              <button 
-                onClick={() => handleUpgrade('premium')}
-                className="flex-1 rounded-xl bg-primary-foreground/30 backdrop-blur-sm p-3 text-center border border-primary-foreground/20 hover:bg-primary-foreground/40 transition-colors"
-              >
-                <p className="text-lg font-display font-bold text-primary-foreground">$29.99</p>
-                <p className="text-[10px] text-primary-foreground/70 font-body">/ year (save 50%)</p>
-              </button>
-            </div>
-          </motion.div>
-        )}
 
         {/* Quick Tools */}
         <div>
