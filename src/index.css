@@ -188,4 +188,19 @@
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.3);
   }
+  .premium-blur {
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    background: rgba(255, 255, 255, 0.4);
+  }
+  .animate-parallax {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  .soft-glow {
+    box-shadow: 0 0 50px -10px hsla(var(--primary) / 0.3);
+  }
+  .text-shadow-premium {
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
 }

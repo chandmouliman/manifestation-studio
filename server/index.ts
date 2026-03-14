@@ -6,6 +6,9 @@ const db = require('./db');
 const authRoutes = require('./routes/auth');
 const journalRoutes = require('./routes/journal');
 const adminRoutes = require('./routes/admin');
+const { router: activityRoutes } = require('./routes/activity');
+const visionRoutes = require('./routes/vision');
+const paymentRoutes = require('./routes/payment');
 
 dotenv.config();
 
@@ -13,7 +16,11 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 app.use(cors({
-  origin: 'http://localhost:8080',
+  origin: [
+    'http://localhost:8080',
+    'https://manifestation-studio-mocha.vercel.app',
+    'https://manifestation-studio.vercel.app'
+  ],
   credentials: true
 }));
 app.use(express.json());
@@ -29,6 +36,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/journal', journalRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/activity', activityRoutes);
+app.use('/api/vision', visionRoutes);
+app.use('/api/payment', paymentRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

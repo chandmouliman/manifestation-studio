@@ -35,11 +35,17 @@ const LoginPage = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      googleProvider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, googleProvider);
       toast.success('Signed in with Google');
       navigate('/');
     } catch (error: any) {
-      toast.error(error.message || 'Google Sign-in failed');
+      console.error("Google Sign-in Error:", error);
+      if (error.code === 'auth/popup-closed-by-user') {
+        toast.error('Sign-in cancelled');
+      } else {
+        toast.error(error.message || 'Google Sign-in failed');
+      }
     }
   };
 

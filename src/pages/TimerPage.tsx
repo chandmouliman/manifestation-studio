@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Play, Pause, RotateCcw } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { ambientSounds, createAmbientSound } from "@/lib/sounds";
 
 const sessions = [
   { label: "Robotic Affirmations", duration: 600, icon: "💬", color: "gradient-pink" },
@@ -17,6 +18,8 @@ const TimerPage = () => {
   const [timeLeft, setTimeLeft] = useState(sessions[0].duration);
   const [isRunning, setIsRunning] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [selectedSound, setSelectedSound] = useState<string | null>("bedroom");
+  const stopAmbientRef = useRef<(() => void) | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -34,6 +37,27 @@ const TimerPage = () => {
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [isRunning, timeLeft]);
+
+  // Handle ambient sound
+  useEffect(() => {
+    if (isRunning && selectedSound) {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const stop = createAmbientSound(selectedSound, audioCtx);
+      stopAmbientRef.current = stop;
+    } else {
+      if (stopAmbientRef.current) {
+        stopAmbientRef.current();
+        stopAmbientRef.current = null;
+      }
+    }
+    
+    return () => {
+      if (stopAmbientRef.current) {
+        stopAmbientRef.current();
+        stopAmbientRef.current = null;
+      }
+    };
+  }, [isRunning, selectedSound]);
 
   const selectSession = (i: number) => {
     setSelectedSession(i);
@@ -146,6 +170,39 @@ const TimerPage = () => {
             )}
           </motion.button>
           <div className="w-14 h-14" /> {/* Spacer for symmetry */}
+        </div>
+
+        {/* Ambient Sound Selection */}
+        <div className="mt-8 w-full max-w-sm">
+          <p className="text-[10px] font-body font-bold text-muted-foreground uppercase tracking-widest mb-3 text-center">
+            Ambient Background Sound
+          </p>
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-2">
+            <button
+              onClick={() => setSelectedSound(null)}
+              className={`shrink-0 px-4 py-2 rounded-xl text-[10px] font-body font-medium transition-all border ${
+                selectedSound === null
+                  ? "bg-primary/10 border-primary/30 text-primary shadow-sm"
+                  : "bg-muted/50 border-border/20 text-muted-foreground"
+              }`}
+            >
+              None
+            </button>
+            {ambientSounds.map((sound) => (
+              <button
+                key={sound.id}
+                onClick={() => setSelectedSound(sound.id)}
+                className={`shrink-0 px-4 py-2 rounded-xl text-[10px] font-body font-medium flex items-center gap-2 transition-all border ${
+                  selectedSound === sound.id
+                    ? "bg-primary/10 border-primary/30 text-primary shadow-sm"
+                    : "bg-muted/50 border-border/20 text-muted-foreground"
+                }`}
+              >
+                <span>{sound.id === "bedroom" ? "🏠" : sound.emoji}</span>
+                <span>{sound.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

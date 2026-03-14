@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { journalPrompts } from "@/data/affirmations";
+import { logUserActivity } from "@/lib/activity";
 
 interface JournalEntry {
   id: number;
@@ -92,6 +93,9 @@ const JournalPage = () => {
         setShowWrite(false);
         setMood(null);
         toast.success("Entry saved successfully");
+        if (user?.id) {
+          logUserActivity(user.id, 'JOURNAL_ENTRY_CREATED', `User created a ${activeTab} entry: "${text.substring(0, 50)}..."`);
+        }
       } else {
         toast.error("Failed to save entry");
       }

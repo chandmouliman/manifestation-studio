@@ -9,11 +9,13 @@ try {
     ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
     : require('./config/serviceAccountKey.json');
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
+  if (admin.apps.length === 0) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+  }
 } catch (error) {
-  console.error("Firebase Admin initialization failed. Make sure server/config/serviceAccountKey.json exists.");
+  console.log("Firebase Admin initialization skipped (serviceAccountKey.json not found). Firebase auth will be disabled.");
 }
 
 module.exports = admin;

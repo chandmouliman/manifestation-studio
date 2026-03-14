@@ -1,7 +1,9 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, RefreshCw, Sparkles, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, RefreshCw, Sparkles, ChevronRight, Lock, Crown, Mic, Camera, Music } from "lucide-react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { logUserActivity } from "@/lib/activity";
 
 // Angel Numbers data
 const angelNumbers: Record<string, { meaning: string; message: string }> = {
@@ -50,11 +52,15 @@ const challenges = [
   },
 ];
 
-type Tool = "menu" | "rewrite" | "angel" | "challenges";
+type Tool = "menu" | "rewrite" | "angel" | "challenges" | "scripting" | "mirror" | "audio";
 
 const ToolsPage = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTool, setActiveTool] = useState<Tool>("menu");
+  const isPremium = user?.plan === 'premium';
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
 
   // Reality Rewrite
   const [oldBelief, setOldBelief] = useState("");
@@ -76,11 +82,18 @@ const ToolsPage = () => {
     if (!oldBelief.trim() || !newBelief.trim()) return;
     setRewrites(prev => [{ old: oldBelief, new: newBelief }, ...prev]);
     setOldBelief(""); setNewBelief("");
+    if (user?.id) {
+      logUserActivity(user.id, 'REALITY_REWRITE_SAVED', `User reframed: "${oldBelief}" → "${newBelief}"`);
+    }
   };
 
   const logAngel = () => {
     if (!angelInput.trim()) return;
     setAngelLog(prev => [{ number: angelInput, date: new Date().toLocaleDateString() }, ...prev]);
+    if (user?.id) {
+      const meaning = angelNumbers[angelInput]?.meaning || "Unknown";
+      logUserActivity(user.id, 'ANGEL_NUMBER_LOGGED', `User logged angel number ${angelInput} (${meaning})`);
+    }
     setAngelInput("");
   };
 
@@ -88,7 +101,12 @@ const ToolsPage = () => {
     const key = `${challengeIdx}-${day}`;
     setCompletedDays(prev => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      const isDone = next.has(key);
+      isDone ? next.delete(key) : next.add(key);
+      if (user?.id && !isDone) {
+        const challenge = challenges[challengeIdx];
+        logUserActivity(user.id, 'CHALLENGE_DAY_COMPLETED', `User completed Day ${day} of "${challenge.title}"`);
+      }
       return next;
     });
   };
@@ -98,6 +116,9 @@ const ToolsPage = () => {
       { id: "rewrite" as Tool, icon: "🔄", label: "Reality Rewrite", desc: "Transform limiting beliefs", color: "bg-rose-light" },
       { id: "angel" as Tool, icon: "👼", label: "Angel Numbers", desc: "Track & decode signs", color: "bg-lilac-light" },
       { id: "challenges" as Tool, icon: "🏆", label: "Challenges", desc: "7-day transformation programs", color: "bg-gold-light" },
+      { id: "scripting" as Tool, icon: "✍️", label: "Advanced Scripting", desc: "369 & 5x55 Methods", color: "bg-pink-soft", premium: true },
+      { id: "mirror" as Tool, icon: "🪞", label: "Mirror Work Mode", desc: "Subconscious reprogramming", color: "bg-sage-light", premium: true },
+      { id: "audio" as Tool, icon: "🎧", label: "Subliminal Audio", desc: "High-vibration tracks", color: "bg-indigo-light", premium: true },
     ];
 
     return (
@@ -121,13 +142,30 @@ const ToolsPage = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.08 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setActiveTool(tool.id)}
+              onClick={() => {
+                if (tool.premium && !isPremium) {
+                  navigate('/trial-expired'); // or a specific premium pitch page
+                  return;
+                }
+                setActiveTool(tool.id);
+                if (user?.id) {
+                  logUserActivity(user.id, 'TOOL_SELECTED', `User opened tool: ${tool.label}`);
+                }
+              }}
             >
-              <div className="w-12 h-12 rounded-xl glass-card flex items-center justify-center shadow-card">
+              <div className="w-12 h-12 rounded-xl glass-card flex items-center justify-center shadow-card relative">
                 <span className="text-2xl">{tool.icon}</span>
+                {tool.premium && !isPremium && (
+                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gold flex items-center justify-center border-2 border-white">
+                    <Lock size={10} className="text-white" />
+                  </div>
+                )}
               </div>
               <div className="flex-1">
-                <p className="text-sm font-body font-semibold text-foreground">{tool.label}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-body font-semibold text-foreground">{tool.label}</p>
+                  {tool.premium && <Crown size={12} className="text-gold" />}
+                </div>
                 <p className="text-xs text-muted-foreground font-body">{tool.desc}</p>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -150,6 +188,9 @@ const ToolsPage = () => {
           {activeTool === "rewrite" && "🔄 Reality Rewrite"}
           {activeTool === "angel" && "👼 Angel Numbers"}
           {activeTool === "challenges" && "🏆 Challenges"}
+          {activeTool === "scripting" && "✍️ Advanced Scripting"}
+          {activeTool === "mirror" && "🪞 Mirror Work"}
+          {activeTool === "audio" && "🎧 Subliminal Audio"}
         </h1>
       </div>
 
@@ -303,92 +344,96 @@ const ToolsPage = () => {
           </>
         )}
 
-        {/* Challenges */}
-        {activeTool === "challenges" && (
-          <>
-            {selectedChallenge === null ? (
-              challenges.map((challenge, i) => (
-                <motion.button
-                  key={i}
-                  className={`w-full rounded-2xl p-5 ${challenge.color} shadow-dreamy border border-border/20 text-left`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedChallenge(i)}
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-3xl">{challenge.icon}</span>
-                    <div>
-                      <p className="text-sm font-body font-semibold text-foreground">{challenge.title}</p>
-                      <p className="text-xs text-muted-foreground font-body">7 days · Transform your mindset</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    {challenge.days.map((_, d) => {
-                      const done = completedDays.has(`${i}-${d + 1}`);
-                      return (
-                        <div key={d} className={`flex-1 h-2 rounded-full ${done ? "bg-primary" : "bg-foreground/10"}`} />
-                      );
-                    })}
-                  </div>
-                </motion.button>
-              ))
-            ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <button
-                  onClick={() => setSelectedChallenge(null)}
-                  className="text-xs text-primary font-body font-medium mb-4 flex items-center gap-1"
-                >
-                  ← All Challenges
-                </button>
-                <div className="rounded-2xl p-5 gradient-fairy shadow-dreamy border border-border/20 mb-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{challenges[selectedChallenge].icon}</span>
-                    <h2 className="text-base font-display font-bold text-foreground">
-                      {challenges[selectedChallenge].title}
-                    </h2>
-                  </div>
-                  <div className="flex gap-1 mb-4">
-                    {challenges[selectedChallenge].days.map((_, d) => {
-                      const done = completedDays.has(`${selectedChallenge}-${d + 1}`);
-                      return <div key={d} className={`flex-1 h-2.5 rounded-full ${done ? "bg-primary" : "bg-muted"}`} />;
-                    })}
-                  </div>
-                </div>
+        {/* Advanced Scripting */}
+        {activeTool === "scripting" && (
+          <div className="space-y-6">
+            <div className="rounded-2xl p-5 gradient-fairy border border-border/20 shadow-dreamy">
+              <h3 className="text-sm font-display font-bold text-foreground mb-2">369 Method Template</h3>
+              <p className="text-xs text-muted-foreground font-body mb-4 italic">Write 3 times in the morning, 6 in the afternoon, 9 at night.</p>
+              <div className="space-y-3">
+                <input placeholder="Your intention (Morning x3)" className="w-full px-4 py-3 rounded-xl bg-primary/5 border border-primary/20 text-sm font-body" />
+                <input placeholder="Your intention (Afternoon x6)" className="w-full px-4 py-3 rounded-xl bg-lilac/5 border border-lilac/20 text-sm font-body" />
+                <input placeholder="Your intention (Night x9)" className="w-full px-4 py-3 rounded-xl bg-rose/5 border border-rose/20 text-sm font-body" />
+                <button className="w-full py-3 rounded-xl gradient-lavender text-primary-foreground font-bold shadow-pink">Record Scripting ✨</button>
+              </div>
+            </div>
+            <div className="rounded-2xl p-5 gradient-fairy border border-border/20 shadow-dreamy">
+              <h3 className="text-sm font-display font-bold text-foreground mb-2">5x55 Manifestation</h3>
+              <p className="text-xs text-muted-foreground font-body mb-4 italic">Write your intention 55 times for 5 consecutive days.</p>
+              <div className="bg-muted/30 p-4 rounded-xl text-center">
+                 <span className="text-2xl font-display font-bold text-primary">Day 1 / 5</span>
+              </div>
+            </div>
+          </div>
+        )}
 
-                {challenges[selectedChallenge].days.map((day, d) => {
-                  const done = completedDays.has(`${selectedChallenge}-${day.day}`);
-                  return (
-                    <motion.button
-                      key={d}
-                      className={`w-full rounded-2xl p-4 mb-2 flex items-start gap-3 text-left border transition-all ${
-                        done
-                          ? "bg-primary/5 border-primary/20"
-                          : "gradient-fairy border-border/20 shadow-card"
-                      }`}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: d * 0.05 }}
-                      onClick={() => toggleDay(selectedChallenge, day.day)}
-                    >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-body font-bold ${
-                        done ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                      }`}>
-                        {done ? "✓" : day.day}
-                      </div>
-                      <div>
-                        <p className={`text-sm font-body font-semibold ${done ? "text-primary" : "text-foreground"}`}>
-                          Day {day.day}: {day.task}
-                        </p>
-                        <p className="text-xs text-muted-foreground font-body">{day.desc}</p>
-                      </div>
-                    </motion.button>
-                  );
-                })}
-              </motion.div>
-            )}
-          </>
+        {/* Mirror Work Mode */}
+        {activeTool === "mirror" && (
+          <div className="space-y-6">
+            <div className="relative rounded-3xl overflow-hidden aspect-[3/4] bg-black shadow-dreamy">
+              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover grayscale opacity-60" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                <AnimatePresence mode="wait">
+                  <motion.p 
+                    key={Math.random()} // In real app, cycle these
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="text-white text-xl font-display font-bold drop-shadow-lg"
+                  >
+                    "I am the architect of my reality"
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+            </div>
+            <button 
+              onClick={async () => {
+                if (!isCameraActive) {
+                  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                  if (videoRef.current) videoRef.current.srcObject = stream;
+                  setIsCameraActive(true);
+                } else {
+                  if (videoRef.current && videoRef.current.srcObject) {
+                    (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+                    videoRef.current.srcObject = null;
+                  }
+                  setIsCameraActive(false);
+                }
+              }}
+              className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2 font-display font-bold text-lg shadow-dreamy transition-all ${
+                isCameraActive ? "bg-destructive text-white" : "gradient-lavender text-primary-foreground"
+              }`}
+            >
+              <Camera size={20} />
+              {isCameraActive ? "Deactivate Mirror" : "Enter Mirror Realm"}
+            </button>
+          </div>
+        )}
+
+        {/* Subliminal Audio */}
+        {activeTool === "audio" && (
+          <div className="space-y-4">
+             {[
+               { title: "Quantum Wealth Shift", freq: "888Hz", duration: "11:11" },
+               { title: "Subconscious Love Portal", freq: "528Hz", duration: "10:00" },
+               { title: "Divine Healing Light", freq: "432Hz", duration: "15:00" },
+               { title: "The Master Manifestor", freq: "7.83Hz", duration: "08:16" }
+             ].map((track, i) => (
+                <div key={i} className="rounded-2xl p-5 gradient-fairy border border-border/20 shadow-card flex items-center gap-4 group hover:border-primary/30 transition-all">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
+                    <Music size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-body font-bold text-foreground">{track.title}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{track.freq} · {track.duration}</p>
+                  </div>
+                  <button className="p-2 rounded-lg bg-muted text-foreground/40 hover:text-primary transition-all">
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+             ))}
+          </div>
         )}
       </div>
     </div>

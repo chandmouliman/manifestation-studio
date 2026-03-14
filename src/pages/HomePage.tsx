@@ -3,6 +3,8 @@ import { Flame, Play, Heart, ChevronRight, Moon, Timer, Sparkles } from "lucide-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { dailyQuotes, affirmationCategories } from "@/data/affirmations";
+import { getDailyContent, DailyContent } from "@/lib/dailySource";
+import { getStreak, getDailyProgress, saveDailyProgress, checkAndResetStreak, DailyProgress } from "@/lib/streakService";
 import heroBg from "@/assets/hero-bg.jpg";
 import lotusIcon from "@/assets/lotus-icon.png";
 
@@ -29,14 +31,32 @@ import { useAuth } from "@/contexts/AuthContext";
 const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [streak] = useState(7);
+  const [streak, setStreak] = useState(0);
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [liked, setLiked] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [selectedEnergy, setSelectedEnergy] = useState<string | null>(null);
   const [checklist, setChecklist] = useState([false, false, false, false]);
+  const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
+  const [dailyContent, setDailyContent] = useState<DailyContent | null>(null);
 
   useEffect(() => {
+    const fetchDaily = async () => {
+      const content = await getDailyContent();
+      setDailyContent(content);
+    };
+    fetchDaily();
+    
+    // Initialize streak and progress
+    checkAndResetStreak();
+    const currentStreak = getStreak();
+    const progress = getDailyProgress();
+    setStreak(currentStreak);
+    setDailyProgress(progress);
+    setSelectedMood(progress.mood);
+    setSelectedEnergy(progress.energy);
+    setChecklist(progress.checklist);
+
     const today = new Date().getDate();
     setQuoteIndex(today % dailyQuotes.length);
   }, []);
@@ -46,7 +66,35 @@ const HomePage = () => {
   const checklistItems = ["Repeat affirmations", "Visualization", "Gratitude practice", "Journal entry"];
 
   const toggleCheck = (i: number) => {
-    setChecklist(prev => prev.map((v, idx) => idx === i ? !v : v));
+    const newChecklist = checklist.map((v, idx) => idx === i ? !v : v);
+    setChecklist(newChecklist);
+    
+    if (dailyProgress) {
+      const updated: DailyProgress = { ...dailyProgress, checklist: newChecklist };
+      setDailyProgress(updated);
+      saveDailyProgress(updated);
+      setStreak(getStreak());
+    }
+  };
+
+  const handleMoodSelect = (label: string) => {
+    setSelectedMood(label);
+    if (dailyProgress) {
+      const updated: DailyProgress = { ...dailyProgress, mood: label };
+      setDailyProgress(updated);
+      saveDailyProgress(updated);
+      setStreak(getStreak());
+    }
+  };
+
+  const handleEnergySelect = (label: string) => {
+    setSelectedEnergy(label);
+    if (dailyProgress) {
+      const updated: DailyProgress = { ...dailyProgress, energy: label };
+      setDailyProgress(updated);
+      saveDailyProgress(updated);
+      setStreak(getStreak());
+    }
   };
 
   const completedCount = checklist.filter(Boolean).length;
@@ -107,7 +155,7 @@ const HomePage = () => {
           </div>
           <div className="flex gap-1">
             {[...Array(7)].map((_, i) => (
-              <div key={i} className={`w-2.5 h-2.5 rounded-full ${i < streak ? "bg-rose" : "bg-muted"}`} />
+              <div key={i} className={`w-2.5 h-2.5 rounded-full ${i < (streak % 8 || (streak > 0 ? 7 : 0)) ? "bg-rose" : "bg-muted"}`} />
             ))}
           </div>
         </motion.div>
@@ -126,7 +174,7 @@ const HomePage = () => {
             {moods.map((mood) => (
               <motion.button
                 key={mood.label}
-                onClick={() => setSelectedMood(mood.label)}
+                onClick={() => handleMoodSelect(mood.label)}
                 className={`shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all border ${
                   selectedMood === mood.label
                     ? "bg-primary/10 border-primary/30 shadow-sm scale-105"
@@ -177,7 +225,7 @@ const HomePage = () => {
               <motion.button
                 key={energy.label}
                 onClick={() => {
-                  setSelectedEnergy(energy.label);
+                  handleEnergySelect(energy.label);
                   navigate(`/affirmations?category=${energy.categoryId}`);
                 }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-body font-medium transition-all border ${
@@ -194,20 +242,45 @@ const HomePage = () => {
           </div>
         </motion.div>
 
-        {/* Daily Quote */}
+        {/* Daily Quote / Motivation */}
         <motion.div
-          className="rounded-2xl p-5 gradient-lavender shadow-dreamy relative overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          className="rounded-3xl p-6 shadow-dreamy relative overflow-hidden premium-blur border border-white/20 soft-glow"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary-foreground/10 animate-sparkle pointer-events-none" />
-          <p className="text-xs font-body font-medium text-primary-foreground/70 uppercase tracking-wider mb-2">
-            ✨ Today's Motivation
-          </p>
-          <p className="text-lg font-display italic text-primary-foreground leading-relaxed">
-            "{dailyQuotes[quoteIndex]}"
-          </p>
+          {dailyContent?.imageUrl && (
+            <div 
+              className="absolute inset-0 z-0 opacity-20"
+              style={{ 
+                backgroundImage: `url(${dailyContent.imageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            />
+          )}
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <p className="text-xs font-body font-bold text-primary uppercase tracking-widest">
+                Daily Inspiration
+              </p>
+            </div>
+            <p className="text-xl font-display italic text-foreground leading-relaxed text-shadow-premium mb-4">
+              "{dailyContent?.affirmation || dailyQuotes[quoteIndex]}"
+            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-body text-muted-foreground italic">
+                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </p>
+              <button 
+                onClick={() => navigate('/affirmations')}
+                className="text-[10px] font-body font-bold text-primary underline underline-offset-4"
+              >
+                Start Session
+              </button>
+            </div>
+          </div>
         </motion.div>
 
         {/* Daily Affirmation Card */}

@@ -1,8 +1,9 @@
+import React, { useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import BottomNav from "./components/BottomNav";
 import HomePage from "./pages/HomePage";
 import AffirmationsPage from "./pages/AffirmationsPage";
@@ -12,14 +13,66 @@ import MenuPage from "./pages/MenuPage";
 import NightModePage from "./pages/NightModePage";
 import TimerPage from "./pages/TimerPage";
 import ToolsPage from "./pages/ToolsPage";
+import TrialExpiredPage from "./pages/TrialExpiredPage";
 import NotFound from "./pages/NotFound";
 
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminLogin from "./pages/AdminLogin";
 
 const queryClient = new QueryClient();
+
+const AppLoading = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <p className="text-sm font-display text-muted-foreground animate-pulse">Initializing Reality...</p>
+    </div>
+  </div>
+);
+
+const AppContent = () => {
+  const { isLoading } = useAuth();
+  
+  if (isLoading) return <AppLoading />;
+
+  return (
+    <div className="max-w-md mx-auto relative min-h-screen">
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/affirmations" element={<RouteGuard component={<AffirmationsPage />} />} />
+        <Route path="/vision-board" element={<RouteGuard component={<VisionBoardPage />} />} />
+        <Route path="/journal" element={<RouteGuard component={<JournalPage />} />} />
+        <Route path="/menu" element={<RouteGuard component={<MenuPage />} />} />
+        <Route path="/night-mode" element={<RouteGuard component={<NightModePage />} />} />
+        <Route path="/timer" element={<RouteGuard component={<TimerPage />} />} />
+        <Route path="/tools" element={<RouteGuard component={<ToolsPage />} />} />
+        <Route path="/trial-expired" element={<TrialExpiredPage />} />
+        <Route path="*" element={<RouteGuard component={<NotFound />} />} />
+      </Routes>
+      <BottomNav />
+    </div>
+  );
+};
+
+const RouteGuard = ({ component }: { component: React.ReactNode }) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.isTrialExpired && user?.plan === 'free' && window.location.pathname !== '/trial-expired') {
+      navigate('/trial-expired');
+    }
+  }, [user, navigate]);
+
+  return <>{component}</>;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -28,23 +81,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="max-w-md mx-auto relative min-h-screen">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/affirmations" element={<AffirmationsPage />} />
-              <Route path="/vision-board" element={<VisionBoardPage />} />
-              <Route path="/journal" element={<JournalPage />} />
-              <Route path="/menu" element={<MenuPage />} />
-              <Route path="/night-mode" element={<NightModePage />} />
-              <Route path="/timer" element={<TimerPage />} />
-              <Route path="/tools" element={<ToolsPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <BottomNav />
-          </div>
+          <AppContent />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

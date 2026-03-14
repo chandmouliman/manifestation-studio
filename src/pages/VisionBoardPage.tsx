@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X, ImageIcon, Sparkles, ChevronDown } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { logUserActivity } from "@/lib/activity";
 
 interface VisionItem {
   id: string;
@@ -8,6 +10,7 @@ interface VisionItem {
   content: string;
   category?: string;
   bgClass?: string;
+  bg_class?: string; // Support backend naming
 }
 
 const visionCategories = [
@@ -79,15 +82,15 @@ const boardGradients = [
   "bg-lavender-soft",
 ];
 
+const categoryCardBgs = [
+  "bg-lavender-light", "bg-rose-light", "bg-gold-light",
+  "bg-sage-light", "bg-pink-soft", "bg-lilac-light",
+  "bg-lavender-soft",
+];
+
 const VisionBoardPage = () => {
-  const [items, setItems] = useState<VisionItem[]>([
-    { id: "1", type: "text", content: "🏡 Dream Home", bgClass: "bg-lavender-light" },
-    { id: "2", type: "text", content: "✈️ Travel the World", bgClass: "bg-lilac-light" },
-    { id: "3", type: "text", content: "💼 Career Success", bgClass: "bg-gold-light" },
-    { id: "4", type: "text", content: "💕 Deep Love", bgClass: "bg-rose-light" },
-    { id: "5", type: "text", content: "✨ Luxury Lifestyle", bgClass: "bg-pink-soft" },
-    { id: "6", type: "text", content: "🌿 Perfect Health", bgClass: "bg-sage-light" },
-  ]);
+  const { user } = useAuth();
+  const [items, setItems] = useState<VisionItem[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const [selectedExampleCat, setSelectedExampleCat] = useState<string | null>(null);
@@ -95,33 +98,122 @@ const VisionBoardPage = () => {
   const [selectedBg, setSelectedBg] = useState("bg-lavender-light");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const addTextItem = () => {
+  useEffect(() => {
+    const fetchItems = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/vision`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setItems(data.map((item: any) => ({
+            ...item,
+            id: item.id.toString(),
+            bgClass: item.bg_class
+          })));
+        }
+      } catch (error) {
+        console.error("Failed to fetch vision board items");
+      }
+    };
+    fetchItems();
+  }, []);
+
+  const addTextItem = async () => {
     if (!newText.trim()) return;
-    setItems((prev) => [...prev, { id: Date.now().toString(), type: "text", content: newText, bgClass: selectedBg }]);
-    setNewText("");
-    setShowAdd(false);
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/vision`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ type: 'text', content: newText, bgClass: selectedBg })
+      });
+      if (response.ok) {
+        const newItem = await response.json();
+        setItems((prev) => [...prev, { ...newItem, id: newItem.id.toString(), bgClass: newItem.bgClass }]);
+        setNewText("");
+        setShowAdd(false);
+        if (user?.id) {
+          logUserActivity(user.id, 'VISION_BOARD_TEXT_ADDED', `User added text: "${newText.substring(0, 30)}..."`);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to add vision board item");
+    }
   };
 
   const addImageItem = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      setItems((prev) => [
-        ...prev,
-        { id: Date.now().toString(), type: "image", content: ev.target?.result as string },
-      ]);
-      setShowAdd(false);
+    reader.onload = async (ev) => {
+      const content = ev.target?.result as string;
+      const token = localStorage.getItem('token');
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/vision`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify({ type: 'image', content })
+        });
+        if (response.ok) {
+          const newItem = await response.json();
+          setItems((prev) => [...prev, { ...newItem, id: newItem.id.toString() }]);
+          setShowAdd(false);
+          if (user?.id) {
+            logUserActivity(user.id, 'VISION_BOARD_IMAGE_ADDED', 'User uploaded an image to their vision board');
+          }
+        }
+      } catch (error) {
+        console.error("Failed to upload vision board image");
+      }
     };
     reader.readAsDataURL(file);
   };
 
-  const addExampleItem = (item: { type: "text"; content: string; bgClass: string }) => {
-    setItems((prev) => [...prev, { id: Date.now().toString(), ...item }]);
+  const addExampleItem = async (item: { type: "text"; content: string; bgClass: string }) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/vision`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ type: item.type, content: item.content, bgClass: item.bgClass })
+      });
+      if (response.ok) {
+        const newItem = await response.json();
+        setItems((prev) => [...prev, { ...newItem, id: newItem.id.toString(), bgClass: newItem.bgClass }]);
+        if (user?.id) {
+          logUserActivity(user.id, 'VISION_BOARD_EXAMPLE_ADDED', `User added inspiration: "${item.content}"`);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to add example item");
+    }
   };
 
-  const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const removeItem = async (id: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/vision/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        setItems((prev) => prev.filter((item) => item.id !== id));
+      }
+    } catch (error) {
+      console.error("Failed to remove vision board item");
+    }
   };
 
   return (

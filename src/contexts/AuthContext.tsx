@@ -12,6 +12,8 @@ interface User {
   phone_number?: string | null;
   plan?: string | null;
   subscription_until?: string | null;
+  trialDaysUsed?: number;
+  isTrialExpired?: boolean;
 }
 
 interface AuthContextType {
@@ -30,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_URL = 'http://localhost:5001';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
   const syncWithBackend = async (firebaseUser: FirebaseUser) => {
     try {
@@ -60,16 +62,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        await syncWithBackend(firebaseUser);
+    let unsubscribe = () => {};
+    
+    try {
+      if (auth && typeof auth.onAuthStateChanged === 'function') {
+        unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+          if (firebaseUser) {
+            await syncWithBackend(firebaseUser);
+          } else {
+            setToken(null);
+            setUser(null);
+            localStorage.removeItem('auth_token');
+          }
+          setIsLoading(false);
+        });
       } else {
-        setToken(null);
-        setUser(null);
-        localStorage.removeItem('auth_token');
+        console.error("Auth instance is not properly initialized.");
+        setIsLoading(false);
       }
+    } catch (error) {
+      console.error("Error setting up auth state listener:", error);
       setIsLoading(false);
-    });
+    }
 
     return () => unsubscribe();
   }, []);

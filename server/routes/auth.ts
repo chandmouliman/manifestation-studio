@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const admin = require('../firebase');
+const { logActivity } = require('./activity');
 const router = express.Router();
 
 // Synchronize Firebase user with local SQLite DB
@@ -31,6 +32,8 @@ router.post('/firebase', async (req, res) => {
       // Initialize stats
       db.prepare('INSERT OR IGNORE INTO user_stats (user_id) VALUES (?)').run(uid);
       
+      logActivity(uid, 'SIGNUP', 'User signed up via Firebase');
+      
       user = db.prepare('SELECT id as uid, * FROM users WHERE id = ?').get(uid);
     } else {
       // Update existing user info if needed
@@ -40,10 +43,20 @@ router.post('/firebase', async (req, res) => {
         phone || decodedToken.phone_number || null,
         uid
       );
+      db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').run(uid);
+      logActivity(uid, 'LOGIN', 'User logged in via Firebase');
       user = db.prepare('SELECT id as uid, * FROM users WHERE id = ?').get(uid);
     }
 
     user.photoURL = decodedToken.picture || null;
+    
+    // Explicitly check trial status
+    const now = new Date();
+    const trialStart = new Date(user.trial_started_at);
+    const diffDays = Math.ceil((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24));
+    user.trialDaysUsed = diffDays;
+    user.isTrialExpired = diffDays > 10 && user.plan === 'free';
+
     res.json({ user });
   } catch (error) {
     console.error('Firebase token verification failed:', error);

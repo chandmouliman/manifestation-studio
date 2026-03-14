@@ -2,144 +2,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Share2, RotateCcw, ArrowLeft, Bookmark, Volume2, VolumeX, Music } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { logUserActivity } from "@/lib/activity";
 import { affirmationCategories } from "@/data/affirmations";
-
-const ambientSounds = [
-  { id: "rain", label: "🌧️ Raindrops", emoji: "🌧️" },
-  { id: "waves", label: "🌊 Ocean Waves", emoji: "🌊" },
-  { id: "bowl", label: "🔔 Singing Bowl", emoji: "🔔" },
-  { id: "forest", label: "🌿 Forest", emoji: "🌿" },
-  { id: "wind", label: "🍃 Gentle Wind", emoji: "🍃" },
-];
-
-// Generate ambient sound using Web Audio API
-const createAmbientSound = (type: string, audioCtx: AudioContext): (() => void) => {
-  if (type === "rain") {
-    // Rain: filtered white noise with modulation
-    const bufferSize = 2 * audioCtx.sampleRate;
-    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
-    const whiteNoise = audioCtx.createBufferSource();
-    whiteNoise.buffer = noiseBuffer;
-    whiteNoise.loop = true;
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.value = 800;
-    filter.Q.value = 0.5;
-    const gain = audioCtx.createGain();
-    gain.gain.value = 0.12;
-    whiteNoise.connect(filter).connect(gain).connect(audioCtx.destination);
-    whiteNoise.start();
-    return () => { whiteNoise.stop(); };
-  }
-  
-  if (type === "waves") {
-    // Ocean waves: modulated noise
-    const bufferSize = 2 * audioCtx.sampleRate;
-    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
-    const whiteNoise = audioCtx.createBufferSource();
-    whiteNoise.buffer = noiseBuffer;
-    whiteNoise.loop = true;
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 500;
-    const gain = audioCtx.createGain();
-    gain.gain.value = 0.15;
-    // Wave modulation
-    const lfo = audioCtx.createOscillator();
-    lfo.type = "sine";
-    lfo.frequency.value = 0.1;
-    const lfoGain = audioCtx.createGain();
-    lfoGain.gain.value = 0.1;
-    lfo.connect(lfoGain).connect(gain.gain);
-    lfo.start();
-    whiteNoise.connect(filter).connect(gain).connect(audioCtx.destination);
-    whiteNoise.start();
-    return () => { whiteNoise.stop(); lfo.stop(); };
-  }
-  
-  if (type === "bowl") {
-    // Singing bowl: sustained harmonic tone
-    const osc1 = audioCtx.createOscillator();
-    osc1.type = "sine";
-    osc1.frequency.value = 256;
-    const osc2 = audioCtx.createOscillator();
-    osc2.type = "sine";
-    osc2.frequency.value = 384;
-    const osc3 = audioCtx.createOscillator();
-    osc3.type = "sine";
-    osc3.frequency.value = 512;
-    const gain = audioCtx.createGain();
-    gain.gain.value = 0.06;
-    const lfo = audioCtx.createOscillator();
-    lfo.type = "sine";
-    lfo.frequency.value = 0.3;
-    const lfoGain = audioCtx.createGain();
-    lfoGain.gain.value = 0.02;
-    lfo.connect(lfoGain).connect(gain.gain);
-    osc1.connect(gain);
-    osc2.connect(gain);
-    osc3.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc1.start(); osc2.start(); osc3.start(); lfo.start();
-    return () => { osc1.stop(); osc2.stop(); osc3.stop(); lfo.stop(); };
-  }
-  
-  if (type === "forest") {
-    // Forest: higher filtered noise with subtle birds (oscillators)
-    const bufferSize = 2 * audioCtx.sampleRate;
-    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
-    const whiteNoise = audioCtx.createBufferSource();
-    whiteNoise.buffer = noiseBuffer;
-    whiteNoise.loop = true;
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.value = 2000;
-    filter.Q.value = 0.3;
-    const gain = audioCtx.createGain();
-    gain.gain.value = 0.06;
-    whiteNoise.connect(filter).connect(gain).connect(audioCtx.destination);
-    whiteNoise.start();
-    return () => { whiteNoise.stop(); };
-  }
-  
-  // Wind
-  const bufferSize = 2 * audioCtx.sampleRate;
-  const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const output = noiseBuffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) {
-    output[i] = Math.random() * 2 - 1;
-  }
-  const whiteNoise = audioCtx.createBufferSource();
-  whiteNoise.buffer = noiseBuffer;
-  whiteNoise.loop = true;
-  const filter = audioCtx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.value = 300;
-  const gain = audioCtx.createGain();
-  gain.gain.value = 0.1;
-  const lfo = audioCtx.createOscillator();
-  lfo.type = "sine";
-  lfo.frequency.value = 0.15;
-  const lfoGain = audioCtx.createGain();
-  lfoGain.gain.value = 0.06;
-  lfo.connect(lfoGain).connect(gain.gain);
-  lfo.start();
-  whiteNoise.connect(filter).connect(gain).connect(audioCtx.destination);
-  whiteNoise.start();
-  return () => { whiteNoise.stop(); lfo.stop(); };
-};
+import { getDailyContent, DailyContent } from "@/lib/dailySource";
+import { ambientSounds, createAmbientSound } from "@/lib/sounds";
 
 const categoryGradients: Record<string, string> = {
   lavender: "gradient-lavender",
@@ -156,6 +23,7 @@ const categoryCardBgs: Record<string, string> = {
 };
 
 const AffirmationsPage = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialCategory = searchParams.get("category") || null;
@@ -165,12 +33,19 @@ const AffirmationsPage = () => {
   const [saved, setSaved] = useState<Set<string>>(new Set());
   const [activeSound, setActiveSound] = useState<string | null>(null);
   const [showSounds, setShowSounds] = useState(false);
+  const [dailyContent, setDailyContent] = useState<DailyContent | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const stopFnRef = useRef<(() => void) | null>(null);
 
   const activeCategory = affirmationCategories.find((c) => c.id === selectedCategory);
 
   useEffect(() => {
+    const fetchDaily = async () => {
+      const content = await getDailyContent();
+      setDailyContent(content);
+    };
+    fetchDaily();
+
     return () => {
       stopFnRef.current?.();
       audioCtxRef.current?.close();
@@ -196,7 +71,11 @@ const AffirmationsPage = () => {
   const toggleLike = (aff: string) => {
     setLiked((prev) => {
       const next = new Set(prev);
-      next.has(aff) ? next.delete(aff) : next.add(aff);
+      const isLiked = next.has(aff);
+      isLiked ? next.delete(aff) : next.add(aff);
+      if (user?.id && !isLiked) {
+        logUserActivity(user.id, 'AFFIRMATION_LIKED', `User liked: "${aff.substring(0, 50)}..."`);
+      }
       return next;
     });
   };
@@ -204,7 +83,11 @@ const AffirmationsPage = () => {
   const toggleSave = (aff: string) => {
     setSaved((prev) => {
       const next = new Set(prev);
-      next.has(aff) ? next.delete(aff) : next.add(aff);
+      const isSaved = next.has(aff);
+      isSaved ? next.delete(aff) : next.add(aff);
+      if (user?.id && !isSaved) {
+        logUserActivity(user.id, 'AFFIRMATION_SAVED', `User saved: "${aff.substring(0, 50)}..."`);
+      }
       return next;
     });
   };
@@ -234,6 +117,10 @@ const AffirmationsPage = () => {
               onClick={() => {
                 setSelectedCategory(cat.id);
                 setCurrentIndex(0);
+                if (!activeSound) toggleSound("bedroom");
+                if (user?.id) {
+                  logUserActivity(user.id, 'AFFIRMATION_CATEGORY_SELECTED', `User selected category: ${cat.name}`);
+                }
               }}
             >
               <div className="w-12 h-12 rounded-xl glass-card flex items-center justify-center shadow-card">
@@ -267,14 +154,27 @@ const AffirmationsPage = () => {
 
   return (
     <div className={`min-h-screen pb-24 ${bgClass} flex flex-col relative overflow-hidden`}>
+      {/* Dynamic Background Image for Daily or Category */}
+      {dailyContent && selectedCategory === 'self-concept' && (
+        <div 
+          className="absolute inset-0 z-0 opacity-40 transition-opacity duration-1000"
+          style={{ 
+            backgroundImage: `url(${dailyContent.imageUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+      )}
+      <div className="absolute inset-0 bg-black/5 z-0" />
+      
       {/* Dreamy decorations */}
-      <div className="absolute top-20 right-8 w-24 h-24 rounded-full bg-primary-foreground/10 blur-2xl animate-drift pointer-events-none" />
-      <div className="absolute bottom-32 left-4 w-16 h-16 rounded-full bg-primary-foreground/10 blur-2xl animate-float pointer-events-none" />
-      <div className="absolute top-1/3 left-1/4 w-3 h-3 rounded-full bg-primary-foreground/30 animate-sparkle pointer-events-none" />
-      <div className="absolute top-1/2 right-1/3 w-2 h-2 rounded-full bg-primary-foreground/25 animate-sparkle pointer-events-none" style={{ animationDelay: '0.7s' }} />
+      <div className="absolute top-20 right-8 w-24 h-24 rounded-full bg-primary-foreground/10 blur-2xl animate-drift pointer-events-none z-10" />
+      <div className="absolute bottom-32 left-4 w-16 h-16 rounded-full bg-primary-foreground/10 blur-2xl animate-float pointer-events-none z-10" />
+      <div className="absolute top-1/3 left-1/4 w-3 h-3 rounded-full bg-primary-foreground/30 animate-sparkle pointer-events-none z-10" />
+      <div className="absolute top-1/2 right-1/3 w-2 h-2 rounded-full bg-primary-foreground/25 animate-sparkle pointer-events-none z-10" style={{ animationDelay: '0.7s' }} />
 
       {/* Header */}
-      <div className="px-5 pt-14 pb-4 flex items-center gap-3">
+      <div className="px-5 pt-14 pb-4 flex items-center gap-3 relative z-20">
         <button
           onClick={() => {
             setSelectedCategory(null);
@@ -342,17 +242,17 @@ const AffirmationsPage = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
-            className="text-center px-4 py-10 rounded-3xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10 shadow-dreamy"
+            className="text-center px-6 py-12 rounded-[2rem] premium-blur border border-white/20 shadow-dreamy relative z-20 soft-glow"
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: -20 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
           >
-            <div className="text-3xl mb-4 animate-pulse-soft">{activeCategory.icon}</div>
-            <p className="text-xl font-display italic text-primary-foreground leading-relaxed">
+            <div className="text-4xl mb-6 animate-pulse-soft">{activeCategory.icon}</div>
+            <p className="text-2xl font-display italic text-primary-foreground leading-relaxed text-shadow-premium">
               "{affirmation}"
             </p>
-            <div className="mt-4 flex justify-center gap-1">
+            <div className="mt-8 flex justify-center gap-1.5">
               {activeCategory.affirmations.map((_, i) => (
                 <div
                   key={i}
