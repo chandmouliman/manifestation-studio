@@ -196,15 +196,17 @@ const AdminPage = () => {
                 { label: 'Avg Streak', value: Math.round(stats?.streaks?.avgStreak || 0), icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
                 { label: 'Live Now', value: 1, icon: Activity, color: 'text-rose-400', bg: 'bg-rose-400/10' },
               ].map((item, i) => (
-                <Card key={i} className="bg-slate-900 border-slate-800 shadow-lg">
+                <Card key={i} className="bg-slate-900/50 border-slate-800 shadow-xl backdrop-blur-sm hover:border-primary/30 transition-all">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between mb-2">
-                       <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">{item.label}</p>
-                       <div className={`p-2 rounded-lg ${item.bg}`}>
+                       <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{item.label}</p>
+                       <div className={`p-2 rounded-xl ${item.bg}`}>
                          <item.icon className={`w-4 h-4 ${item.color}`} />
                        </div>
                     </div>
-                    <h3 className="text-3xl font-bold font-display text-white">{item.value}</h3>
+                    <h3 className="text-3xl font-bold font-display text-white">
+                      {item.value === 0 ? <span className="text-slate-700">0</span> : item.value}
+                    </h3>
                   </CardContent>
                 </Card>
               ))}
@@ -219,19 +221,26 @@ const AdminPage = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[300px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats?.moods || []}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                        <XAxis dataKey="mood" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                        <RechartsTooltip 
-                          contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px' }}
-                          cursor={{ fill: '#1e293b' }}
-                        />
-                        <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <div className="h-[300px] w-full flex items-center justify-center">
+                    {(stats?.moods || []).length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={stats?.moods || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                          <XAxis dataKey="mood" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                          <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                          <RechartsTooltip 
+                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px' }}
+                            cursor={{ fill: '#1e293b' }}
+                          />
+                          <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="text-center space-y-2">
+                        <Smile className="w-12 h-12 text-slate-800 mx-auto" />
+                        <p className="text-slate-500 text-sm">No moods tracked yet by seekers.</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

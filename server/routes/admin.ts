@@ -3,7 +3,10 @@ const jwt = require('jsonwebtoken');
 const db = require('../db');
 const admin = require('../firebase');
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'your_manifestation_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set!');
+}
 
 const isAdmin = async (req: any, res: any, next: any) => {
   const authHeader = req.headers['authorization'];
