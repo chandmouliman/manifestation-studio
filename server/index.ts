@@ -7,8 +7,8 @@ const authRoutes = require('./routes/auth');
 const journalRoutes = require('./routes/journal');
 const adminRoutes = require('./routes/admin');
 const { router: activityRoutes } = require('./routes/activity');
-const visionRoutes = require('./routes/vision');
-const paymentRoutes = require('./routes/payment');
+// const visionRoutes = require('./routes/vision');
+// const paymentRoutes = require('./routes/payment');
 
 dotenv.config();
 

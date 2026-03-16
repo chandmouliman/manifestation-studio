@@ -17,7 +17,7 @@ import NotFound from "./pages/NotFound";
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
+import AdminPage from "./pages/AdminPage";
 
 const queryClient = new QueryClient();
 
@@ -36,22 +36,26 @@ const AppContent = () => {
   if (isLoading) return <AppLoading />;
 
   return (
-    <div className="max-w-md mx-auto relative min-h-screen">
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/affirmations" element={<RouteGuard component={<AffirmationsPage />} />} />
-        <Route path="/vision-board" element={<RouteGuard component={<VisionBoardPage />} />} />
-        <Route path="/journal" element={<RouteGuard component={<JournalPage />} />} />
-        <Route path="/menu" element={<RouteGuard component={<MenuPage />} />} />
-        <Route path="/night-mode" element={<RouteGuard component={<NightModePage />} />} />
-        <Route path="/timer" element={<RouteGuard component={<TimerPage />} />} />
-        <Route path="/tools" element={<RouteGuard component={<ToolsPage />} />} />
-        <Route path="*" element={<RouteGuard component={<NotFound />} />} />
-      </Routes>
-      <BottomNav />
-    </div>
+    <Routes>
+      <Route path="/admin" element={<AdminPage />} />
+      <Route path="*" element={
+        <div className="max-w-md mx-auto relative min-h-screen">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/affirmations" element={<RouteGuard component={<AffirmationsPage />} />} />
+            <Route path="/vision-board" element={<RouteGuard component={<VisionBoardPage />} />} />
+            <Route path="/journal" element={<RouteGuard component={<JournalPage />} />} />
+            <Route path="/menu" element={<RouteGuard component={<MenuPage />} />} />
+            <Route path="/night-mode" element={<RouteGuard component={<NightModePage />} />} />
+            <Route path="/timer" element={<RouteGuard component={<TimerPage />} />} />
+            <Route path="/tools" element={<RouteGuard component={<ToolsPage />} />} />
+            <Route path="*" element={<RouteGuard component={<NotFound />} />} />
+          </Routes>
+          <BottomNav />
+        </div>
+      } />
+    </Routes>
   );
 };
 

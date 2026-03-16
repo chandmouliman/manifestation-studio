@@ -44,13 +44,34 @@ router.get('/stats', isAdmin, (req: any, res: any) => {
     const streakStats = db.prepare('SELECT AVG(streak) as avgStreak, MAX(streak) as maxStreak FROM user_stats').get();
     const planStats = db.prepare('SELECT plan, COUNT(*) as count FROM users GROUP BY plan').all();
     
+    // New: Mood stats
+    const moodStats = db.prepare(`
+      SELECT mood, COUNT(*) as count 
+      FROM journal_entries 
+      WHERE mood IS NOT NULL 
+      GROUP BY mood 
+      ORDER BY count DESC
+    `).all();
+    
+    // New: Recent activity summary
+    const activitySummary = db.prepare(`
+      SELECT action, COUNT(*) as count 
+      FROM activity_log 
+      WHERE timestamp > datetime('now', '-7 days')
+      GROUP BY action 
+      ORDER BY count DESC
+    `).all();
+
     res.json({
       users: userCount,
       entries: entryCount,
       streaks: streakStats,
-      plans: planStats
+      plans: planStats,
+      moods: moodStats,
+      activitySummary
     });
   } catch (error) {
+    console.error('Stats error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -111,15 +132,6 @@ router.get('/seeker/:id/activity', isAdmin, (req: any, res: any) => {
   }
 });
 
-router.get('/seeker/:id/activity', isAdmin, (req: any, res: any) => {
-  try {
-    const logs = db.prepare('SELECT * FROM activity_log WHERE user_id = ? ORDER BY timestamp DESC LIMIT 50').all(req.params.id);
-    res.json(logs);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 router.post('/seeker/:id/premium', isAdmin, (req: any, res: any) => {
   const { isPremium } = req.body;
   const plan = isPremium ? 'premium' : 'free';
@@ -133,19 +145,10 @@ router.post('/seeker/:id/premium', isAdmin, (req: any, res: any) => {
 
 router.post('/login', (req: any, res: any) => {
   const { username, password } = req.body;
-  // Professional restricted login with Username/ID support
-  const allowedAdmins = [
-    'vishwa@manifestation.com', 
-    'chandu.manchalla@gmail.com', 
-    'chandu', 
-    'vishwa', 
-    'admin'
-  ];
-
-  if (allowedAdmins.includes(username) && password === 'admin123') {
+  
+  if (username === 'chandmouliman' && password === 'swades') {
      const token = jwt.sign({ username, admin: true }, JWT_SECRET, { expiresIn: '24h' });
-     const displayName = username.includes('chandu') ? 'Chandu (Admin)' : 'Vishwa (Admin)';
-     res.json({ token, user: { username, name: displayName, role: 'admin' } });
+     res.json({ token, user: { username, name: 'Chandmouliman (Admin)', role: 'admin' } });
   } else {
     res.status(401).json({ error: 'Unauthorized access' });
   }
